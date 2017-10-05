@@ -1,6 +1,8 @@
 package xenoframium.ecsrender.pickable;
 
+import org.lwjgl.glfw.GLFW;
 import xenoframium.ecs.*;
+import xenoframium.ecsrender.PositionComponent;
 import xenoframium.ecsrender.PositioningComponent;
 import xenoframium.ecsrender.gl.Camera;
 import xenoframium.ecsrender.gl.Projection;
@@ -8,6 +10,7 @@ import xenoframium.ecsrender.system.CursorPosition;
 import xenoframium.ecsrender.system.Input;
 import xenoframium.ecsrender.system.NDCCoord;
 import xenoframium.ecsrender.system.Window;
+import xenoframium.ecsrender.tex3drenderable.Tex3DRenderable;
 import xenoframium.ecsrender.util.BucketedMap;
 import xenoframium.glmath.GLM;
 import xenoframium.glmath.linearalgebra.*;
@@ -35,7 +38,7 @@ public class PickingSystem implements BaseSystem {
         }
     }
 
-    private static final int BUCKET_SIZE = 8;
+    private static final int BUCKET_SIZE = 4;
 
     private Set<Entity> entities = new HashSet<>();
     private BucketedMap<Entity> entityMapping = new BucketedMap<>(BUCKET_SIZE);
@@ -58,6 +61,7 @@ public class PickingSystem implements BaseSystem {
         entities.add(entity);
         Vec4 pos = new Vec4(0, 0, 0, 1);
         if (entity.hasComponents(PositioningComponent.class)) {
+            PositionComponent pcc = entity.getComponent(PositionComponent.class);
             PositioningComponent pc = entity.getComponent(PositioningComponent.class);
             pos = pc.getModelMatrix().mult(new Vec4(0, 0, 0, 1));
             pc.addObserver(new PositioningObserver(entity));
@@ -72,44 +76,90 @@ public class PickingSystem implements BaseSystem {
     }
 
     @Override
-    public void update(EntityManager entityManager, long deltaTime, long time) {
+    public void update(EntityManager entityManager, double deltaTime, double time) {
+        float maxT = Float.NEGATIVE_INFINITY;
         CursorPosition cp = inp.getCursorPosition();
         Vec4 ndc = NDCCoord.getAsNDC(window, cp.x, cp.y, -1);
-        Vec4 ndc2 = NDCCoord.getAsNDC(window, cp.x, cp.y, 1);
-        Mat4 ivp = GLM.mult(projection.getMat(), camera.getMat()).inv();
-        Vec4 ws1 = ivp.mult(ndc);
-        Vec4 ws2 = ivp.mult(ndc2);
-        ws1 = ws1.div(ws1.w);
-        ws2 = ws2.div(ws2.w);
-        Line3 lin = GLM.lineFromPoints(new Vec3(ws1.x, ws1.y, ws1.z), new Vec3(ws2.x, ws2.y, ws2.z));
-        Mat4 invCam = camera.getMat().inv();
-        Vec3 cameraPos = new Vec3(invCam.m[3][0], invCam.m[3][1], invCam.m[3][2]);
+        if (window.isCursorDisabled()) {
+            ndc = new Vec4(0, 0, -1, 1);
+        }
+        Mat4 ip = projection.getMat().inv();
+        Vec4 ws1 = ip.mult(ndc);
+        ws1.div(ws1.w);
+        Line3 cameraSpaceline = GLM.lineFromPoints(new Vec3(0, 0, 0), new Vec3(ws1.x, ws1.y, ws1.z));
+        Mat4 ic = camera.getMat().inv();
+        Vec3 cameraPos = new Vec3(ic.m[3][0], ic.m[3][1], ic.m[3][2]);
         Set<Entity> collidables = entityMapping.getInRange(cameraPos, reach);
 
         PickableComponent collisionComponent = null;
-        float minZ = Float.MAX_VALUE;
-
+        Entity pickedEntity = null;
+        Vec3 rayIntersection = null;
+        Vec3 modelIntersection = null;
+        Vec3 normal = null;
+        int tc = 0;
+        double currentTime = GLFW.glfwGetTime();
         for (Entity collidable : collidables) {
             PickableComponent comp = collidable.getComponent(PickableComponent.class);
+            Mat4 modelMatrix = new Mat4();
+            if (collidable.hasComponents(PositioningComponent.class)) {
+                modelMatrix = collidable.getComponent(PositioningComponent.class).getModelMatrix();
+            }
+
+            Mat4 mv = camera.getMat().mult(modelMatrix);
+
+            Vec4 modelOriginPos = new Vec4(mv.m[3][0], mv.m[3][1], mv.m[3][2], 1);
+            Vec4 maxDist = mv.mult(new Vec4(comp.furthestPoint, 1)).subt(modelOriginPos);
+            float r2 = new Vec3(maxDist).magSq();
+            float dist2 = mv.m[3][0]*mv.m[3][0] + mv.m[3][1]*mv.m[3][1] + mv.m[3][2]*mv.m[3][2];
+            if (dist2 - r2 > reach*reach) {
+                continue;
+            }
+
+            float LOC2 = modelOriginPos.z*modelOriginPos.z;
+            if (LOC2 - dist2 + r2 < 0) {
+                continue;
+            }
+
+            Mat4 imv = new Mat4(mv).inv();
+
             Triangle[] mesh = comp.triangles;
-            for (Triangle t : mesh) {
-                Vec4 intersection = new Vec4(GLM.findLinePlaneIntersection(lin, GLM.planeFromTriangle(t)), 1);
-                if (collidable.hasComponents(PositioningComponent.class)) {
-                    intersection = collidable.getComponent(PositioningComponent.class).getModelMatrix().inv().mult(intersection);
+
+            for (Triangle triangle : mesh) {
+                Plane trianglePlane = GLM.planeFromTriangle(triangle);
+                Plane cameraSpacePlane = new Plane(trianglePlane).transform(mv);
+                if (cameraSpacePlane.n.dot(cameraSpaceline.a) < 0) {
+                    continue;
                 }
-                if (GLM.isPointInTriangle(t, new Vec3(intersection))) {
-                    if (intersection.z < minZ) {
-                        minZ = intersection.z;
+                tc++;
+                Vec4 cameraSpaceIntersection = new Vec4(GLM.findLinePlaneIntersection(cameraSpaceline, cameraSpacePlane), 1);
+                Vec3 modelSpaceIntersection = new Vec3(imv.mult(cameraSpaceIntersection));
+                if (GLM.isPointInTriangle(triangle, modelSpaceIntersection)) {
+                    float cameraSpaceT;
+
+                    if (cameraSpaceline.a.z != 0) {
+                        cameraSpaceT = new Vec3(cameraSpaceIntersection).subt(cameraSpaceline.r0).z / cameraSpaceline.a.z;
+                    } else if (cameraSpaceline.a.y != 0) {
+                        cameraSpaceT = new Vec3(cameraSpaceIntersection).subt(cameraSpaceline.r0).y / cameraSpaceline.a.y;
+                    } else {
+                        cameraSpaceT = new Vec3(cameraSpaceIntersection).subt(cameraSpaceline.r0).x / cameraSpaceline.a.x;
+                    }
+
+                    if (maxT < cameraSpaceT && cameraSpaceT < 0) {
+                        rayIntersection = new Vec3(cameraSpaceIntersection);
+                        modelIntersection = modelSpaceIntersection;
+                        maxT = cameraSpaceT;
                         collisionComponent = comp;
+                        pickedEntity = collidable;
+                        normal = trianglePlane.n;
                     }
                 }
             }
         }
 
-        if (collisionComponent != null && minZ < reach) {
-            collisionComponent.callback.onPick();
-        }
+        System.out.printf("Intersected: %d triangles in %f ms\n", tc, GLFW.glfwGetTime() - currentTime);
 
-        Triangle tr = new Triangle(new Vec3(0, 0, 0), new Vec3(0, 1, 0), new Vec3(-1, 0, 0));
+        if (collisionComponent != null && rayIntersection.magSq() < reach*reach) {
+            collisionComponent.callback.onPick(pickedEntity, modelIntersection, normal);
+        }
     }
 }

@@ -33,6 +33,7 @@ import static org.lwjgl.opengl.GL45.*;
  */
 public class Window {
     private GlfwWindow window;
+    private boolean isCursorDisabled=false;
 
     public final int width;
     public final int height;
@@ -96,10 +97,16 @@ public class Window {
 
     public void disableCursor() {
         glfwSetInputMode(window.getId(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        isCursorDisabled = true;
     }
 
     public void normalCursor() {
         glfwSetInputMode(window.getId(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        isCursorDisabled = false;
+    }
+
+    public boolean isCursorDisabled() {
+        return isCursorDisabled;
     }
 
     public void enableStickyKeys() {

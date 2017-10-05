@@ -1,36 +1,40 @@
 package xenoframium.ecsrender.text;
 
 import org.lwjgl.system.MemoryStack;
-import xenoframium.ecs.Component;
-import xenoframium.ecsrender.gl.IBO;
-import xenoframium.ecsrender.gl.Texture;
-import xenoframium.ecsrender.gl.VAO;
-import xenoframium.ecsrender.gl.VBO;
+import xenoframium.ecsrender.IndexedMesh;
+import xenoframium.glmath.linearalgebra.Vec3;
 import xenoframium.glmath.linearalgebra.Vec4;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
+import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.system.MemoryStack.*;
+import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
+import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL14.*;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL21.*;
+import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL31.*;
+import static org.lwjgl.opengl.GL32.*;
+import static org.lwjgl.opengl.GL33.*;
+import static org.lwjgl.opengl.GL40.*;
+import static org.lwjgl.opengl.GL41.*;
+import static org.lwjgl.opengl.GL42.*;
+import static org.lwjgl.opengl.GL43.*;
+import static org.lwjgl.opengl.GL44.*;
+import static org.lwjgl.opengl.GL45.*;
 
 /**
- * Created by chrisjung on 29/09/17.
+ * Created by chrisjung on 2/10/17.
  */
-public class TextRenderable implements Component, AutoCloseable {
-    final VAO vao;
-    final VBO coordVBO;
-    final VBO uvVBO;
-    final IBO indexBuffer;
-    final int renderMode;
-    final int numVertices;
-    final Texture texture;
-    final boolean isIndexed;
-    final Vec4 colour;
-    public final float width;
-    public final float height;
-
-    public TextRenderable(FontInfo fontInfo, String text, int linespacing, Vec4 colour) {
+public class TextMeshGenerator {
+    public static TextInfo assemble(FontInfo fontInfo, String text, int linespacing, Vec4 colour) {
         try (MemoryStack stack = stackPush()) {
             FloatBuffer xOff = stack.callocFloat(1);
             FloatBuffer yOff = stack.callocFloat(1);
@@ -38,31 +42,31 @@ public class TextRenderable implements Component, AutoCloseable {
             ArrayList<Float> verts = new ArrayList<>();
             ArrayList<Float> uvs = new ArrayList<>();
             ArrayList<Integer> indices = new ArrayList<>();
-            float mx=Integer.MAX_VALUE, Mx=Integer.MIN_VALUE, my=Integer.MAX_VALUE, My=Integer.MIN_VALUE;
+            float mx = Integer.MAX_VALUE, Mx = Integer.MIN_VALUE, my = Integer.MAX_VALUE, My = Integer.MIN_VALUE;
             for (int i = 0; i < text.length(); i++) {
                 char c = text.charAt(i);
                 if (c != '\n') {
                     GlyphInfo gi = fontInfo.getGlyphInfo(c, xOff, yOff);
 
-                    mx = Math.min(mx,gi.verts[0]);
-                    mx = Math.min(mx,gi.verts[3]);
-                    mx = Math.min(mx,gi.verts[6]);
-                    mx = Math.min(mx,gi.verts[9]);
+                    mx = Math.min(mx, gi.verts[0]);
+                    mx = Math.min(mx, gi.verts[3]);
+                    mx = Math.min(mx, gi.verts[6]);
+                    mx = Math.min(mx, gi.verts[9]);
 
-                    Mx = Math.max(Mx,gi.verts[0]);
-                    Mx = Math.max(Mx,gi.verts[3]);
-                    Mx = Math.max(Mx,gi.verts[6]);
-                    Mx = Math.max(Mx,gi.verts[9]);
+                    Mx = Math.max(Mx, gi.verts[0]);
+                    Mx = Math.max(Mx, gi.verts[3]);
+                    Mx = Math.max(Mx, gi.verts[6]);
+                    Mx = Math.max(Mx, gi.verts[9]);
 
-                    my = Math.min(my,gi.verts[1]);
-                    my = Math.min(my,gi.verts[4]);
-                    my = Math.min(my,gi.verts[7]);
-                    my = Math.min(my,gi.verts[10]);
+                    my = Math.min(my, gi.verts[1]);
+                    my = Math.min(my, gi.verts[4]);
+                    my = Math.min(my, gi.verts[7]);
+                    my = Math.min(my, gi.verts[10]);
 
-                    My = Math.max(My,gi.verts[1]);
-                    My = Math.max(My,gi.verts[4]);
-                    My = Math.max(My,gi.verts[7]);
-                    My = Math.max(My,gi.verts[10]);
+                    My = Math.max(My, gi.verts[1]);
+                    My = Math.max(My, gi.verts[4]);
+                    My = Math.max(My, gi.verts[7]);
+                    My = Math.max(My, gi.verts[10]);
 
                     //Vert 0
                     verts.add(gi.verts[0]);
@@ -95,12 +99,12 @@ public class TextRenderable implements Component, AutoCloseable {
                     uvs.add(gi.uvs[7]);
 
                     indices.add(currentIndex);
-                    indices.add(currentIndex+1);
-                    indices.add(currentIndex+2);
+                    indices.add(currentIndex + 1);
+                    indices.add(currentIndex + 2);
 
                     indices.add(currentIndex);
-                    indices.add(currentIndex+2);
-                    indices.add(currentIndex+3);
+                    indices.add(currentIndex + 2);
+                    indices.add(currentIndex + 3);
 
                     currentIndex += 4;
                 } else {
@@ -108,11 +112,12 @@ public class TextRenderable implements Component, AutoCloseable {
                     xOff.clear();
                     yOff.clear();
                     xOff.put(0);
-                    yOff.put(lineNumber * (fontInfo.fontSize+linespacing));
+                    yOff.put(lineNumber * (fontInfo.fontSize + linespacing));
                 }
             }
-            width = Mx-mx;
-            height = My-my;
+
+            float width = Mx - mx;
+            float height = My - my;
 
             float[] vs = new float[verts.size()];
             float[] uv = new float[uvs.size()];
@@ -127,29 +132,7 @@ public class TextRenderable implements Component, AutoCloseable {
                 inds[i] = indices.get(i);
             }
 
-            isIndexed = true;
-            vao = new VAO();
-            this.colour = colour;
-            this.renderMode = GL_TRIANGLES;
-            this.texture = fontInfo.fontTexture;
-            this.numVertices = inds.length;
-
-            coordVBO = new VBO();
-            coordVBO.bufferData(vs);
-            uvVBO = new VBO();
-            uvVBO.bufferData(uv);
-            indexBuffer = new IBO();
-            indexBuffer.bufferData(inds);
-            vao.addAttribPointer(coordVBO, 0, 3, GL_FLOAT);
-            vao.addAttribPointer(uvVBO, 1, 2, GL_FLOAT);
+            return new TextInfo(fontInfo, new IndexedMesh(vs, uv, inds, GL_TRIANGLES), width, height, colour);
         }
-    }
-
-    @Override
-    public void close() throws RuntimeException {
-        vao.close();
-        indexBuffer.close();
-        coordVBO.close();
-        uvVBO.close();
     }
 }

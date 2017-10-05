@@ -6,7 +6,9 @@ import xenoframium.glwrapper.GlTexture;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -93,7 +95,7 @@ public class Texture implements AutoCloseable {
             IntBuffer heightBuffer = stack.mallocInt(1);
             IntBuffer compBuffer = stack.mallocInt(1);
 
-            ByteBuffer textureBuffer = STBImage.stbi_load(textureFile.getAbsolutePath(), widthBuffer, heightBuffer, compBuffer, stbiComposition);
+            ShortBuffer textureBuffer = STBImage.stbi_load_16(textureFile.getAbsolutePath(), widthBuffer, heightBuffer, compBuffer, stbiComposition);
 
             width = widthBuffer.get(0);
             height = heightBuffer.get(0);
@@ -121,10 +123,11 @@ public class Texture implements AutoCloseable {
                     break;
             }
 
-            glTexImage2D(GL_TEXTURE_2D, 0, glComp, width, height, 0, glComp, GL_UNSIGNED_BYTE, textureBuffer);
+            glTexImage2D(GL_TEXTURE_2D, 0, glComp, width, height, 0, glComp, GL_UNSIGNED_SHORT, textureBuffer);
 
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            STBImage.stbi_image_free(textureBuffer);
         }
     }
 
@@ -145,7 +148,7 @@ public class Texture implements AutoCloseable {
     }
 
     @Override
-    public void close() throws RuntimeException {
+    public void close() {
         glDeleteTextures(glTexture.getId());
     }
 }

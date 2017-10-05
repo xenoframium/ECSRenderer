@@ -15,11 +15,12 @@ import java.util.Set;
  * Created by chrisjung on 1/10/17.
  */
 public class PositioningSystem implements BaseSystem {
-    private Map<Entity, Long> entityUpdateTimes = new HashMap<>();
+    private Map<Entity, Double> entityUpdateTimes = new HashMap<>();
 
     @Override
     public void notifyEntityAddition(Entity entity) {
-        entityUpdateTimes.put(entity, -1L);
+        entityUpdateTimes.put(entity, -2.0);
+        dfs(entity, -1.0);
     }
 
     @Override
@@ -27,7 +28,7 @@ public class PositioningSystem implements BaseSystem {
         entityUpdateTimes.remove(entity);
     }
 
-    private Mat4 dfs(Entity e, Long time) {
+    private Mat4 dfs(Entity e, Double time) {
         if (entityUpdateTimes.get(e) == time) {
             return e.getComponent(PositioningComponent.class).modelMatrix;
         }
@@ -69,7 +70,7 @@ public class PositioningSystem implements BaseSystem {
     }
 
     @Override
-    public void update(EntityManager entityManager, long dT, long t) {
+    public void update(EntityManager entityManager, double dT, double t) {
         for (Entity e : entityUpdateTimes.keySet()) {
             dfs(e, t);
         }

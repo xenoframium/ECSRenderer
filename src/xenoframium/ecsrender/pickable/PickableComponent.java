@@ -39,6 +39,7 @@ class UnsupportedDrawTypeException extends RuntimeException {
 public class PickableComponent implements Component {
     final PickCallback callback;
     final Triangle[] triangles;
+    final Vec3 furthestPoint;
     public PickableComponent(Mesh mesh, PickCallback callback, int drawType) {
         this.callback = callback;
         switch (drawType) {
@@ -48,7 +49,7 @@ public class PickableComponent implements Component {
                     Vec3 v1 = new Vec3(mesh.coords[i], mesh.coords[i+1], mesh.coords[i+2]);
                     Vec3 v2 = new Vec3(mesh.coords[i+3], mesh.coords[i+4], mesh.coords[i+5]);
                     Vec3 v3 = new Vec3(mesh.coords[i+6], mesh.coords[i+7], mesh.coords[i+8]);
-                    triangles[i/3] = new Triangle(v1, v2, v3);
+                    triangles[i/9] = new Triangle(v1, v2, v3);
                 }
                 break;
             case GL_TRIANGLE_STRIP:
@@ -65,5 +66,16 @@ public class PickableComponent implements Component {
             default:
                 throw new UnsupportedDrawTypeException("Unsupported draw type: " + drawType);
         }
+        Vec3 best = new Vec3(0, 0, 0);
+        float bestMagSq = 0;
+        for (int i = 0; i < mesh.coords.length; i+=3) {
+            Vec3 next = new Vec3(mesh.coords[i], mesh.coords[i+1], mesh.coords[i+2]);
+            float nMagSq = next.mag();
+            if (nMagSq > bestMagSq) {
+                best = next;
+                bestMagSq = nMagSq;
+            }
+        }
+        furthestPoint = best;
     }
 }

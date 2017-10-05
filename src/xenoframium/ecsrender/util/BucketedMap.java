@@ -80,7 +80,7 @@ public class BucketedMap<T> {
         int bX = (int) Math.floor(pos.x / bucketSize);
         int bY = (int) Math.floor(pos.y / bucketSize);
         int bZ = (int) Math.floor(pos.z / bucketSize);
-        Pos p = new Pos(bX, bY, bZ);
+        Pos p = new Pos(bX, bY-1, bZ);
         Set<T> st = new HashSet<T>();
         Set<Pos> vis = new HashSet<>();
         Queue<Pos> q = new ArrayDeque<>();
@@ -88,16 +88,14 @@ public class BucketedMap<T> {
         vis.add(p);
         dist += bucketSize;
         dist *= dist;
-        for (Set<T> a : bucketMap.values()) {
-            st.addAll(a);
-        }
+        //System.out.println();
         while (!q.isEmpty()) {
             Pos v = q.poll();
             if (bucketMap.containsKey(v)) {
                 st.addAll(bucketMap.get(v));
             }
             for (int i = 0; i < xOff.length; i++) {
-                Pos next = new Pos(p.x+xOff[i], p.y+yOff[i], p.z+zOff[i]);
+                Pos next = new Pos(v.x+xOff[i], v.y+yOff[i], v.z+zOff[i]);
                 if (vis.contains(next)) {
                     continue;
                 }
@@ -105,9 +103,9 @@ public class BucketedMap<T> {
                 int yCo = next.y * bucketSize;
                 int zCo = next.z * bucketSize;
                 for (int j = 0; j < xC.length; j++) {
-                    int xt = xCo + xC[j] * bucketSize;
-                    int yt = yCo + yC[j] * bucketSize;
-                    int zt = zCo + zC[j] * bucketSize;
+                    float xt = xCo + xC[j] * bucketSize - pos.x;
+                    float yt = yCo + yC[j] * bucketSize - pos.y;
+                    float zt = zCo + zC[j] * bucketSize - pos.z;
                     if (xt*xt+yt*yt+zt*zt < dist) {
                         q.add(next);
                         vis.add(next);

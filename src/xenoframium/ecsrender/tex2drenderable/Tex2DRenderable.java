@@ -1,4 +1,4 @@
-package xenoframium.ecsrender.tex3drenderable;
+package xenoframium.ecsrender.tex2drenderable;
 
 import xenoframium.ecs.Component;
 import xenoframium.ecsrender.IndexedMesh;
@@ -7,15 +7,13 @@ import xenoframium.ecsrender.gl.IBO;
 import xenoframium.ecsrender.gl.Texture;
 import xenoframium.ecsrender.gl.VAO;
 import xenoframium.ecsrender.gl.VBO;
-import xenoframium.glwrapper.GlProgram;
-import xenoframium.glwrapper.GlUniform;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
 
 /**
- * Created by chrisjung on 29/09/17.
+ * Created by chrisjung on 3/10/17.
  */
-public class Tex3DRenderable implements Component, AutoCloseable {
+public class Tex2DRenderable implements Component, AutoCloseable {
     final VAO vao;
     final IBO indexBuffer;
     final int renderMode;
@@ -28,12 +26,15 @@ public class Tex3DRenderable implements Component, AutoCloseable {
 
     private boolean isVisible = true;
 
-    public Tex3DRenderable(IndexedMesh mesh, Texture texture) {
+    public float z;
+
+    public Tex2DRenderable(IndexedMesh mesh, Texture texture, float zValue) {
         isIndexed = true;
         vao = new VAO();
         this.renderMode = mesh.drawType;
         this.texture = texture;
         this.numVertices = mesh.indices.length;
+        this.z = zValue;
 
         coordVBO.bufferData(mesh.coords);
         uvVBO.bufferData(mesh.uvs);
@@ -43,13 +44,14 @@ public class Tex3DRenderable implements Component, AutoCloseable {
         vao.addAttribPointer(uvVBO, 1, 2, GL_FLOAT);
     }
 
-    public Tex3DRenderable(Mesh mesh, Texture texture) {
+    public Tex2DRenderable(Mesh mesh, Texture texture, float zValue) {
         indexBuffer = null;
         isIndexed = false;
         vao = new VAO();
         this.renderMode = mesh.drawType;
         this.texture = texture;
         this.numVertices = mesh.coords.length / 3;
+        this.z = zValue;
 
         coordVBO.bufferData(mesh.coords);
         uvVBO.bufferData(mesh.uvs);
