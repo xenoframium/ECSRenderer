@@ -1,15 +1,12 @@
-package xenoframium.ecsrender;
+package xenoframium.ecsrender.universalcomponents;
 
 import xenoframium.ecs.BaseSystem;
 import xenoframium.ecs.Entity;
 import xenoframium.ecs.EntityManager;
-import xenoframium.glmath.GLM;
 import xenoframium.glmath.linearalgebra.Mat4;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Created by chrisjung on 1/10/17.

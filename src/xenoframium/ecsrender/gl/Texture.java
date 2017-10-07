@@ -19,9 +19,9 @@ import static org.lwjgl.opengl.GL30.*;
  */
 public class Texture implements AutoCloseable {
     final GlTexture glTexture;
-    private int width;
-    private int height;
-    private boolean hasAlpha;
+    private final int width;
+    private final int height;
+    private final boolean hasAlpha;
 
     public Texture(byte[] textureBytes, int width, int height, int stbiComposition) {
         this.width = width;

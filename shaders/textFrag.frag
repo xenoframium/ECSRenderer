@@ -4,13 +4,15 @@ in vec2 uv;
 
 out vec4 colour;
 
-uniform vec4 textColour;
+uniform vec4 foregroundColour;
+uniform vec4 backgroundColour;
+
 uniform sampler2D sampler;
 
 void main(){
     if (texture(sampler, uv).rgb == vec3(0, 0, 0)) {
-        colour = vec4(1,1,1,0);
+        colour = backgroundColour;
     } else {
-        colour = textColour;
+        colour = foregroundColour;
     }
 }

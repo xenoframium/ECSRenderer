@@ -1,44 +1,18 @@
-package xenoframium.ecsrender.text;
+package xenoframium.ecsrender;
 
-import com.sun.javafx.font.Glyph;
 import org.lwjgl.stb.*;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import xenoframium.ecsrender.gl.Texture;
-import xenoframium.ecsrender.tex3drenderable.Tex3DRenderable;
-import xenoframium.glwrapper.GlProgram;
-import xenoframium.glwrapper.GlShader;
-import xenoframium.glwrapper.GlUniform;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.nio.file.Files;
-import java.util.ArrayList;
 
 import static org.lwjgl.system.MemoryUtil.*;
 import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.opengl.GL.*;
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL12.*;
-import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL14.*;
-import static org.lwjgl.opengl.GL15.*;
-import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL21.*;
-import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.opengl.GL31.*;
-import static org.lwjgl.opengl.GL32.*;
-import static org.lwjgl.opengl.GL33.*;
-import static org.lwjgl.opengl.GL40.*;
-import static org.lwjgl.opengl.GL41.*;
-import static org.lwjgl.opengl.GL42.*;
-import static org.lwjgl.opengl.GL43.*;
-import static org.lwjgl.opengl.GL44.*;
-import static org.lwjgl.opengl.GL45.*;
 
 class FontException extends RuntimeException {
     public FontException(String msg) {

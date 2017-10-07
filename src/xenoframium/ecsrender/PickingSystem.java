@@ -1,16 +1,15 @@
-package xenoframium.ecsrender.pickable;
+package xenoframium.ecsrender;
 
 import org.lwjgl.glfw.GLFW;
 import xenoframium.ecs.*;
-import xenoframium.ecsrender.PositionComponent;
-import xenoframium.ecsrender.PositioningComponent;
+import xenoframium.ecsrender.universalcomponents.PositionComponent;
+import xenoframium.ecsrender.universalcomponents.PositioningComponent;
 import xenoframium.ecsrender.gl.Camera;
 import xenoframium.ecsrender.gl.Projection;
 import xenoframium.ecsrender.system.CursorPosition;
 import xenoframium.ecsrender.system.Input;
 import xenoframium.ecsrender.system.NDCCoord;
 import xenoframium.ecsrender.system.Window;
-import xenoframium.ecsrender.tex3drenderable.Tex3DRenderable;
 import xenoframium.ecsrender.util.BucketedMap;
 import xenoframium.glmath.GLM;
 import xenoframium.glmath.linearalgebra.*;
@@ -155,8 +154,6 @@ public class PickingSystem implements BaseSystem {
                 }
             }
         }
-
-        System.out.printf("Intersected: %d triangles in %f ms\n", tc, GLFW.glfwGetTime() - currentTime);
 
         if (collisionComponent != null && rayIntersection.magSq() < reach*reach) {
             collisionComponent.callback.onPick(pickedEntity, modelIntersection, normal);

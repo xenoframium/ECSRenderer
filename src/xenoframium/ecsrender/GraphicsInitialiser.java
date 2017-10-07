@@ -15,7 +15,7 @@ public class GraphicsInitialiser {
         glfwInit();
         STBImage.stbi_set_flip_vertically_on_load(true);
 
-        Window window = new Window("sdfd", width, height);
+        Window window = new Window(windowTitle, width, height);
         window.makeContextCurrent();
         window.show();
         createCapabilities();

@@ -1,4 +1,4 @@
-package xenoframium.ecsrender;
+package xenoframium.ecsrender.universalcomponents;
 
 import xenoframium.ecs.Component;
 import xenoframium.ecs.Observable;

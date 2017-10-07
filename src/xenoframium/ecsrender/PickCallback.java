@@ -1,4 +1,4 @@
-package xenoframium.ecsrender.pickable;
+package xenoframium.ecsrender;
 
 import xenoframium.ecs.Entity;
 import xenoframium.glmath.linearalgebra.Vec3;
