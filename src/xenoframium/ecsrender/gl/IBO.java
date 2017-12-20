@@ -22,7 +22,7 @@ public class IBO implements AutoCloseable {
     }
 
     @Override
-    public void close() throws RuntimeException {
+    public void close() {
         glDeleteBuffers(id);
     }
 }

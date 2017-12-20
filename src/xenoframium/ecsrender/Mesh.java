@@ -1,57 +1,57 @@
 package xenoframium.ecsrender;
 
+import xenoframium.glmath.linearalgebra.Vec3;
+import xenoframium.glmath.linearalgebra.Vec4;
+
+import java.util.Arrays;
+
 /**
- * Created by chrisjung on 1/10/17.
+ * Created by chrisjung on 11/12/17.
  */
 public class Mesh {
-    final float[] coords;
-    final float[] uvs;
-    final int[] indices;
-    final int drawType;
-
-    final boolean hasUVs;
-    final boolean hasIndices;
-
-    public Mesh(float[] coords, int drawType) {
-        this.coords = coords;
-        this.drawType = drawType;
-
-        this.hasUVs = false;
-        this.hasIndices = false;
-
-        this.uvs = null;
-        this.indices = null;
+    public static class VertexIndexOutOfBounds extends RuntimeException {
+        private VertexIndexOutOfBounds(int index) {
+            super("Vertex index out of bounds: " + index);
+        }
     }
 
-    public Mesh(float[] coords, int drawType, float[] uvs) {
-        this.coords = coords;
-        this.uvs = uvs;
-        this.drawType = drawType;
+    private final int renderMode;
+    private final float[] vertices;
+    private final int[] indices;
 
-        this.hasUVs = true;
-        this.hasIndices = false;
-
-        this.indices = null;
+    public Mesh(float[] vertices, int renderMode) {
+        this.vertices = Arrays.copyOf(vertices, vertices.length);
+        this.renderMode = renderMode;
+        indices = new int[vertices.length / 3];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = i;
+        }
     }
 
-    public Mesh(float[] coords, int drawType, int[] indices) {
-        this.coords = coords;
-        this.drawType = drawType;
-        this.indices = indices;
-
-        this.hasUVs = false;
-        this.hasIndices = true;
-
-        this.uvs = null;
+    public Mesh(float[] vertices, int[] indices, int renderMode) {
+        this.vertices = Arrays.copyOf(vertices, vertices.length);
+        this.indices = Arrays.copyOf(indices, indices.length);
+        this.renderMode = renderMode;
     }
 
-    public Mesh(float[] coords, int drawType, float[] uvs, int[] indices) {
-        this.coords = coords;
-        this.uvs = uvs;
-        this.drawType = drawType;
-        this.indices = indices;
+    public Vec3 getVertex(int index) {
+        int vertexIndex = indices[index];
+        return new Vec3(vertices[vertexIndex*3], vertices[vertexIndex*3+1], vertices[vertexIndex*3+2]);
+    }
 
-        this.hasUVs = true;
-        this.hasIndices = true;
+    public int getRenderMode() {
+        return renderMode;
+    }
+
+    public float[] getVertices() {
+        return Arrays.copyOf(vertices, vertices.length);
+    }
+
+    public int[] getIndices() {
+        return Arrays.copyOf(indices, indices.length);
+    }
+
+    public int getNumVertices() {
+        return indices.length;
     }
 }

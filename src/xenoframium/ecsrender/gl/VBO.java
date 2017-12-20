@@ -93,8 +93,18 @@ public class VBO implements AutoCloseable {
         }
     }
 
+    public ByteBuffer mapBuffer(int access) {
+        bind();
+        return glMapBuffer(GL_ARRAY_BUFFER, access);
+    }
+
+    public void unmapBuffer() {
+        bind();
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+    }
+
     @Override
-    public void close() throws RuntimeException {
+    public void close() {
         glDeleteBuffers(glVbo.getId());
     }
 }

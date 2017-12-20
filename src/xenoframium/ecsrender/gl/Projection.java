@@ -9,12 +9,26 @@ import xenoframium.glmath.linearalgebra.Mat4;
 public class Projection {
     Mat4 perspectiveMatrix;
 
-    public Projection(float fov, float aspect, float near, float far) {
+    private Projection() {};
+
+    public static Projection createPerspectiveProjection(float fov, float aspect, float near, float far) {
+        Projection proj = new Projection();
+        proj.perspectiveMatrix = GLM.perspective(fov, aspect, near, far);
+        return proj;
+    }
+
+    public static Projection createOrthoProjection(float width, float height, float near, float far) {
+        Projection proj = new Projection();
+        proj.perspectiveMatrix = GLM.ortho(width, height, near, far);
+        return proj;
+    }
+
+    public void reprojectPerspective(float fov, float aspect, float near, float far) {
         perspectiveMatrix = GLM.perspective(fov, aspect, near, far);
     }
 
-    public void reproject(float fov, float aspect, float near, float far) {
-        perspectiveMatrix = GLM.perspective(fov, aspect, near, far);
+    public void reprojectOrtho(float width, float height, float near, float far) {
+        perspectiveMatrix = GLM.ortho(width, height, near, far);
     }
 
     public Mat4 getMat() {

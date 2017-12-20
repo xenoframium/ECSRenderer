@@ -38,7 +38,7 @@ public class VAO implements AutoCloseable {
     }
 
     @Override
-    public void close() throws RuntimeException {
+    public void close() {
         glDeleteVertexArrays(glVao.getId());
     }
 }
